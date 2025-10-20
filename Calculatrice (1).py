@@ -1,46 +1,45 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+import math
 
-"""
-TP 1 — Calculatrice en Python (Première séance)
-
-Objectifs pédagogiques:
-- Entrées/sorties avec input() et print()
-- Variables, types (int, float), conversions
-- Fonctions et réutilisation de code
-- Conditions (if/elif/else) et boucles (while)
-- Gestion d'erreurs simples (division par zéro, saisie invalide)
-- Formatage de chaînes (f-strings)
-
-Consignes:
-1) Lancez le programme: python calculatrice.py
-2) Suivez le menu pour choisir une opération et saisir des nombres
-3) Lisez les commentaires TODO pour des exercices supplémentaires
-"""
-
-# Fonctions de calcul de base
 def addition(a: float, b: float) -> float:
-    """Retourne la somme de a et b."""
     return a + b
 
 def soustraction(a: float, b: float) -> float:
-    """Retourne la différence a - b."""
     return a - b
 
 def multiplication(a: float, b: float) -> float:
-    """Retourne le produit a * b."""
     return a * b
 
 def division(a: float, b: float) -> float:
-    """Retourne le quotient a / b. Gère la division par zéro."""
     if b == 0:
-        # Levée d'une exception pour montrer la gestion d'erreurs
         raise ZeroDivisionError("Division par zéro impossible.")
     return a / b
 
-# Utilitaire: lecture robuste d'un nombre
+def puissance(a: float, b: float) -> float:
+    return a ** b
+
+def modulo(a: float, b: float) -> float:
+    if b == 0:
+        raise ZeroDivisionError("Modulo par zéro impossible.")
+    return a % b
+
+def racine_carre(a: float) -> float:
+    if a < 0:
+        raise ValueError("Impossible de calculer la racine carrée d’un nombre négatif.")
+    return math.sqrt(a)
+
+operations = {
+    "+": addition,
+    "-": soustraction,
+    "*": multiplication,
+    "/": division,
+    "^": puissance,
+    "%": modulo,
+    "√": racine_carre
+}
+
+historique = []
+
 def lire_nombre(message: str) -> float:
-    """Demande un nombre à l'utilisateur jusqu'à obtenir une saisie valide."""
     while True:
         texte = input(message).strip().replace(",", ".")
         try:
@@ -48,110 +47,148 @@ def lire_nombre(message: str) -> float:
         except ValueError:
             print("Saisie invalide. Entrez un nombre (ex: 3, 4.2, -7).")
 
-# Affichage du menu
+def demander_decimales(message: str = "Nombre de décimales à afficher : ") -> int:
+    while True:
+        texte = input(message).strip()
+        if texte == "":
+            return 10
+        try:
+            n = int(texte)
+            if n < 0:
+                print("Le nombre de décimales doit être positif.")
+                continue
+            return n
+        except ValueError:
+            print("Saisie invalide. Entrez un entier (ex: 2, 5, 10).")
+
 def afficher_menu() -> None:
-    print("\n=== Calculatrice - TP Python (Séance 1) ===")
+    print("\n=== Calculatrice - TP Python ===")
     print("Choisissez une opération :")
     print("  1) Addition        (+)")
     print("  2) Soustraction    (-)")
     print("  3) Multiplication  (*)")
     print("  4) Division        (/)")
+    print("  5) Puissance       (^)")
+    print("  6) Modulo          (%)")
+    print("  7) Racine carrée   (√)")
+    print("  h) Historique")
+    print("  e) Exporter l’historique")
+    print("  s) Calculer une série")
     print("  q) Quitter")
 
-# Sélection de l'opération à partir du choix utilisateur
 def obtenir_operation() -> str:
-    """Retourne le symbole d'opération choisi: '+', '-', '*', '/', ou 'q'."""
     choix = input("Votre choix: ").strip().lower()
-    if choix in ("1", "+"):
+    if choix in ("1", "+"): 
         return "+"
-    if choix in ("2", "-"):
+    if choix in ("2", "-"): 
         return "-"
-    if choix in ("3", "*"):
+    if choix in ("3", "*"): 
         return "*"
-    if choix in ("4", "/"):
+    if choix in ("4", "/"): 
         return "/"
-    if choix in ("q", "quit", "exit"):
+    if choix in ("5", "^"): 
+        return "^"
+    if choix in ("6", "%"): 
+        return "%"
+    if choix in ("7",): 
+        return "√"
+    if choix == "h": 
+        return "h"
+    if choix == "e": 
+        return "e"
+    if choix == "s": 
+        return "s"
+    if choix in ("q"): 
         return "q"
     print("Choix invalide. Réessayez.")
-    return ""  # signaler un choix non valide
+    return ""
 
-def calculer(op: str, a: float, b: float) -> float:
-    """Applique l'opération op sur a et b."""
-    if op == "+":
-        return addition(a, b)
-    if op == "-":
-        return soustraction(a, b)
-    if op == "*":
-        return multiplication(a, b)
-    if op == "/":
-        return division(a, b)
-    raise ValueError(f"Opération inconnue: {op}")
+def calculer(op: str, a: float, b: float = None) -> float:
+    if op not in operations:
+        raise ValueError(f"Opération inconnue: {op}")
+    fonction = operations[op]
+    if op == "√":
+        return fonction(a)
+    else:
+        return fonction(a, b)
+
+def exporter_historique(fichier: str = "historique.txt") -> None:
+    if not historique:
+        print("Aucun calcul à exporter.")
+        return
+    with open(fichier, "w", encoding="utf-8") as f:
+        f.write("\n".join(historique))
+    print(f"Historique exporté dans le fichier '{fichier}'.")
+
+def calculer_serie() -> None:
+    print("\n=== Mode Calcul en série ===")
+    total = lire_nombre("Entrez le premier nombre : ")
+    while True:
+        op = obtenir_operation()
+        if op not in operations or op == "√":
+            print("Choisissez une opération binaire (+, -, *, /, ^, %).")
+            continue
+        b = lire_nombre("Entrez le nombre suivant : ")
+        total = calculer(op, total, b)
+        print(f"Résultat actuel : {total}")
+        continuer = input("Continuer la série ? (o/n) : ").strip().lower()
+        if continuer not in ("o", "oui", "y", "yes", ""):
+            break
+    historique.append(f"Série = {total}")
+    print(f"Résultat final de la série : {total}")
 
 def main() -> None:
-    # Boucle principale
     while True:
         afficher_menu()
         op = obtenir_operation()
-        if op == "":
-            continue  # mauvais choix, on ré-affiche le menu
-        if op == "q":
+
+        if op == "√":
+            a = lire_nombre("Entrez le nombre : ")
+            z = demander_decimales("Nombre de décimales à afficher (ex: 2,5,10) : ")
+        elif op in ("+", "-", "*", "/", "^", "%"):
+            a = lire_nombre("Entrez le premier nombre: ")
+            b = lire_nombre("Entrez le second nombre: ")
+            z = demander_decimales("Nombre de décimales à afficher (ex: 2,5,10) : ")
+        elif op == "h":
+            if not historique:
+                print("Aucun calcul effectué pour l’instant.")
+            else:
+                print("\n--- Historique ---")
+                for ligne in historique:
+                    print(ligne)
+            continue
+        elif op == "e":
+            exporter_historique()
+            continue
+        elif op == "s":
+            calculer_serie()
+            continue
+        elif op == "q":
             print("Au revoir.")
             break
+        else:
+            continue
 
-        # Lecture des opérandes
-        a = lire_nombre("Entrez le premier nombre: ")
-        b = lire_nombre("Entrez le second nombre: ")
-
-        # Calcul + affichage du résultat avec gestion d'erreurs
         try:
-            resultat = calculer(op, a, b)
-            # Formatage: limite l'affichage à 10 décimales utiles
-            print(f"Résultat: {a} {op} {b} = {resultat:.10g}")
+            if op == "√":
+                resultat = calculer(op, a)
+                ligne = f"√{a} = {resultat:.{z}g}"
+            else:
+                resultat = calculer(op, a, b)
+                ligne = f"{a} {op} {b} = {resultat:.{z}g}"
+
+            print(f"Résultat: {ligne}")
+            historique.append(ligne)
+
         except ZeroDivisionError as e:
             print(f"Erreur: {e}")
         except Exception as e:
             print(f"Une erreur est survenue: {e}")
 
-        # Option: demander si l'utilisateur veut continuer
-        continuer = input("Continuer ? (o/n): ").strip().lower()
+        continuer = input("Continuer ? (o/n) : ").strip().lower()
         if continuer not in ("o", "oui", "y", "yes", ""):
             print("Au revoir.")
             break
-
-# ===========================
-# TODO — Exercices supplémentaires (à faire pendant/à la fin du TP)
-# 1) Ajoutez une opération puissance (a ** b) dans le menu:
-#    - Ajoutez l'option 5) Puissance (^) et acceptez '^' comme saisie.
-#    - Créez une fonction puissance(a, b) et adaptez calculer().
-#
-# 2) Ajoutez une opération modulo (a % b):
-#    - Gérez le cas b == 0.
-#
-# 3) Opérations unaire (racine carrée):
-#    - Ajoutez sqrt(a) nécessitant un seul nombre.
-#    - Astuce: détectez les opérations à un seul opérande et ignorez la demande du second.
-#
-# 4) Historique:
-#    - Conservez une liste des opérations effectuées (ex: ["3 + 2 = 5"]).
-#    - Ajoutez un menu  h) Historique  pour l'afficher.
-#
-# 5) Validation avancée:
-#    - Refusez la racine carrée des nombres négatifs (math.sqrt).
-#    - Affichez des messages d'erreur plus précis.
-#
-# 6) Mise en forme:
-#    - Permettez à l'utilisateur de choisir le nombre de décimales à afficher.
-#
-# 7) Tests rapides:
-#    - Écrivez quelques assert, ex: assert addition(2, 3) == 5
-#
-# 8) Refactorisation:
-#    - Remplacez les if/elif de calculer() par un dictionnaire d'opérations.
-#
-# 9) Bonus:
-#    - Exportez l'historique dans un fichier texte.
-#    - Ajoutez une option "Calculer une série" qui enchaîne plusieurs opérations.
-# ===========================
 
 if __name__ == "__main__":
     main()
